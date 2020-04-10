@@ -9,12 +9,13 @@ import pandas as pd
 from dash.dependencies import Input, Output, State, ClientsideFunction
 import dash_core_components as dcc
 import dash_html_components as html
+from util.helpers import *
 
 # Multi-dropdown options
 from controls import COUNTIES, WELL_STATUSES, WELL_TYPES, WELL_COLORS
 
 # Custom imports
-from views import filter 
+from views import filter, header
 
 # get relative data folder
 PATH = pathlib.Path(__file__).parent
@@ -24,21 +25,6 @@ app = dash.Dash(
     __name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}]
 )
 server = app.server
-
-# Create controls
-county_options = [
-    {"label": str(COUNTIES[county]), "value": str(county)} for county in COUNTIES
-]
-
-well_status_options = [
-    {"label": str(WELL_STATUSES[well_status]), "value": str(well_status)}
-    for well_status in WELL_STATUSES
-]
-
-well_type_options = [
-    {"label": str(WELL_TYPES[well_type]), "value": str(well_type)}
-    for well_type in WELL_TYPES
-]
 
 
 # Load data
@@ -79,45 +65,7 @@ app.layout = html.Div(
         dcc.Store(id="aggregate_data"),
         # empty Div to trigger javascript file for graph resizing
         html.Div(id="output-clientside"),
-        html.Div(
-            [
-                html.Div(
-                    [
-                    ],
-                    className="one-third column",
-                ),
-                html.Div(
-                    [
-                        html.Div(
-                            [
-                                html.H3(
-                                    "CO2 Emissions in Freight Traffic",
-                                    style={"margin-bottom": "0px"},
-                                ),
-                                html.H5(
-                                    "42. Team NYC", style={"margin-top": "0px"}
-                                ),
-                            ]
-                        )
-                    ],
-                    className="one-half column",
-                    id="title",
-                ),
-                html.Div(
-                    [
-                        html.A(
-                            html.Button("Learn More: DVA", id="learn-more-button"),
-                            href="https://docs.google.com/document/d/e/2PACX-1vR5-8SC5dE30GdEohe69d-CA0QA45dPtBI43VYImQsqLKW7PjIVHPCGtA9fFlu98hAw6YWVF9Pyb-4n/pub#h.9rebwbttjkfm",
-                        )
-                    ],
-                    className="one-third column",
-                    id="button",
-                ),
-            ],
-            id="header",
-            className="row flex-display",
-            style={"margin-bottom": "25px"},
-        ),
+        header.get_header(),
         filter.get_filter(),
         html.Div(
             [
@@ -132,6 +80,7 @@ app.layout = html.Div(
             ],
             className="row flex-display",
         ),
+        """
         html.Div(
             [
                 html.Div(
@@ -145,91 +94,13 @@ app.layout = html.Div(
             ],
             className="row flex-display",
         ),
+        """
     ],
     id="mainContainer",
     style={"display": "flex", "flex-direction": "column"},
 )
 
 
-# Helper functions
-def human_format(num):
-    if num == 0:
-        return "0"
-
-    magnitude = int(math.log(num, 1000))
-    mantissa = str(int(num / (1000 ** magnitude)))
-    return mantissa + ["", "K", "M", "G", "T", "P"][magnitude]
-
-
-def filter_dataframe(df, well_statuses, well_types, year_slider):
-    dff = df[
-        df["Well_Status"].isin(well_statuses)
-        & df["Well_Type"].isin(well_types)
-        & (df["Date_Well_Completed"] > dt.datetime(year_slider[0], 1, 1))
-        & (df["Date_Well_Completed"] < dt.datetime(year_slider[1], 1, 1))
-    ]
-    return dff
-
-
-def produce_individual(api_well_num):
-    try:
-        points[api_well_num]
-    except:
-        return None, None, None, None
-
-    index = list(
-        range(min(points[api_well_num].keys()), max(points[api_well_num].keys()) + 1)
-    )
-    gas = []
-    oil = []
-    water = []
-
-    for year in index:
-        try:
-            gas.append(points[api_well_num][year]["Gas Produced, MCF"])
-        except:
-            gas.append(0)
-        try:
-            oil.append(points[api_well_num][year]["Oil Produced, bbl"])
-        except:
-            oil.append(0)
-        try:
-            water.append(points[api_well_num][year]["Water Produced, bbl"])
-        except:
-            water.append(0)
-
-    return index, gas, oil, water
-
-
-def produce_aggregate(selected, year_slider):
-
-    index = list(range(max(year_slider[0], 1985), 2016))
-    gas = []
-    oil = []
-    water = []
-
-    for year in index:
-        count_gas = 0
-        count_oil = 0
-        count_water = 0
-        for api_well_num in selected:
-            try:
-                count_gas += points[api_well_num][year]["Gas Produced, MCF"]
-            except:
-                pass
-            try:
-                count_oil += points[api_well_num][year]["Oil Produced, bbl"]
-            except:
-                pass
-            try:
-                count_water += points[api_well_num][year]["Water Produced, bbl"]
-            except:
-                pass
-        gas.append(count_gas)
-        oil.append(count_oil)
-        water.append(count_water)
-
-    return index, gas, oil, water
 
 
 # Create callbacks
@@ -239,7 +110,7 @@ app.clientside_callback(
     [Input("count_graph", "figure")],
 )
 
-
+"""
 @app.callback(
     Output("aggregate_data", "data"),
     [
@@ -248,6 +119,7 @@ app.clientside_callback(
         Input("year_slider", "value"),
     ],
 )
+"""
 def update_production_text(well_statuses, well_types, year_slider):
 
     dff = filter_dataframe(df, well_statuses, well_types, year_slider)
@@ -277,7 +149,6 @@ def display_type(selector):
         return ["GD", "GE", "GW", "IG", "IW", "OD", "OE", "OW"]
     return []
 
-
 # Slider -> count graph
 @app.callback(Output("year_slider", "value"), [Input("count_graph", "selectedData")])
 def update_year_slider(count_graph_selected):
@@ -304,6 +175,7 @@ def update_well_text(well_statuses, well_types, year_slider):
     return dff.shape[0]
 
 
+"""
 @app.callback(
     [
         Output("gasText", "children"),
@@ -312,6 +184,7 @@ def update_well_text(well_statuses, well_types, year_slider):
     ],
     [Input("aggregate_data", "data")],
 )
+"""
 def update_text(data):
     return data[0] + " mcf", data[1] + " bbl", data[2] + " bbl"
 
@@ -324,10 +197,10 @@ def update_text(data):
         Input("well_types", "value"),
         Input("year_slider", "value"),
     ],
-    [State("lock_selector", "value"), State("main_graph", "relayoutData")],
+    [State("main_graph", "relayoutData")],
 )
 def make_main_figure(
-    well_statuses, well_types, year_slider, selector, main_graph_layout
+    well_statuses, well_types, year_slider, main_graph_layout
 ):
 
     dff = filter_dataframe(df, well_statuses, well_types, year_slider)
@@ -346,7 +219,7 @@ def make_main_figure(
         traces.append(trace)
 
     # relayoutData is None by default, and {'autosize': True} without relayout action
-    if main_graph_layout is not None and selector is not None and "locked" in selector:
+    if main_graph_layout is not None:
         if "mapbox.center" in main_graph_layout.keys():
             lon = float(main_graph_layout["mapbox.center"]["lon"])
             lat = float(main_graph_layout["mapbox.center"]["lat"])
@@ -424,6 +297,7 @@ def make_individual_figure(main_graph_hover):
 
 
 # Selectors, main graph -> aggregate graph
+"""
 @app.callback(
     Output("aggregate_graph", "figure"),
     [
@@ -433,6 +307,7 @@ def make_individual_figure(main_graph_hover):
         Input("main_graph", "hoverData"),
     ],
 )
+"""
 def make_aggregate_figure(well_statuses, well_types, year_slider, main_graph_hover):
 
     layout_aggregate = copy.deepcopy(layout)
@@ -484,6 +359,7 @@ def make_aggregate_figure(well_statuses, well_types, year_slider, main_graph_hov
 
 
 # Selectors, main graph -> pie graph
+"""
 @app.callback(
     Output("pie_graph", "figure"),
     [
@@ -492,6 +368,7 @@ def make_aggregate_figure(well_statuses, well_types, year_slider, main_graph_hov
         Input("year_slider", "value"),
     ],
 )
+"""
 def make_pie_figure(well_statuses, well_types, year_slider):
 
     layout_pie = copy.deepcopy(layout)
@@ -554,7 +431,6 @@ def make_pie_figure(well_statuses, well_types, year_slider):
     ],
 )
 def make_count_figure(well_statuses, well_types, year_slider):
-
     layout_count = copy.deepcopy(layout)
 
     dff = filter_dataframe(df, well_statuses, well_types, [1960, 2017])
@@ -588,7 +464,7 @@ def make_count_figure(well_statuses, well_types, year_slider):
         ),
     ]
 
-    layout_count["title"] = "Completed Wells/Year"
+    layout_count["title"] = "Optimized CO2 vs Actual CO2"
     layout_count["dragmode"] = "select"
     layout_count["showlegend"] = False
     layout_count["autosize"] = True

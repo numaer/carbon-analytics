@@ -84,7 +84,7 @@ def get_filter():
                     className="dcc_control",
                     marks={1: "1", 5:"5", 30:"30"}
                     ),
-                html.P("Filter by well status:", className="control_label"),
+                html.P("Filter by AIS zones:", className="control_label"),
                 dcc.RadioItems(
                     id="well_status_selector",
                     options=[
@@ -103,13 +103,7 @@ def get_filter():
                         value=list(WELL_STATUSES.keys()),
                         className="dcc_control",
                         ),
-                dcc.Checklist(
-                        id="lock_selector",
-                        options=[{"label": "Lock camera", "value": "locked"}],
-                        className="dcc_control",
-                        value=[],
-                        ),
-                html.P("Filter by well type:", className="control_label"),
+                html.P("Filter by vessel type:", className="control_label"),
                 dcc.RadioItems(
                         id="well_type_selector",
                         options=[
