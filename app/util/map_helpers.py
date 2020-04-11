@@ -34,11 +34,20 @@ HELPERS
 """
 
 def get_lat_lon_range(df):
-    """Return the range of lat and lon in the data."""
-    return [df['lat'].min(), df['lat'].max()], [df['lon'].min(), df['lon'].max()]
+    """
+    Return the range of lat and lon in the data.
+
+    Credits: https://github.com/ekhoda/plotly_hub_and_spoke
+    """
+    return [df['lat'].min(), 
+            df['lat'].max()], [df['lon'].min(), df['lon'].max()]
 
 def get_scope(lat_range, lon_range):
-    """Assign the proper scope based on range of data's lat/lon."""
+    """
+    Assign the proper scope based on range of data's lat/lon.
+
+    Credits: https://github.com/ekhoda/plotly_hub_and_spoke
+    """
     us_lat_rng = [24, 55]
     us_lon_rng = [-127, -50]
     na_lat_rng = [15, 85]
@@ -68,7 +77,6 @@ def get_scope(lat_range, lon_range):
 """
 Generates the data needed to funnel trip data into a plotly geoscatter map
 """
-
 def gen_df_spokes_start(df_full_trips):
     df = df_full_trips[['MMSI',
                                  'BaseDateTime_Start',
@@ -133,5 +141,3 @@ def gen_df_spoke_end(df_full_trips):
     df['name'] = 'Spoke End'
     df.head()
     return df
-
-

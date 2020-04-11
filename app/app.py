@@ -18,30 +18,20 @@ from controls import COUNTIES, WELL_STATUSES, WELL_TYPES, WELL_COLORS
 # Custom imports
 from views import filter, header, metrics
 from views import map as map_view
+from model.trips import Trips
 
 # get relative data folder
 PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("data").resolve()
 
 app = dash.Dash(
-    __name__, meta_tags=[{"name": "viewport", "content": "width=device-width"}]
+    __name__, meta_tags=[{"name": "viewport", 
+                          "content": "width=device-width"}]
 )
 server = app.server
 
-
 # Load data
-full_trips_df = pd.read_csv(DATA_PATH.joinpath("fullTrips.csv"), low_memory=False)
-
-df = pd.read_csv(DATA_PATH.joinpath("wellspublic.csv"), low_memory=False)
-df["Date_Well_Completed"] = pd.to_datetime(df["Date_Well_Completed"])
-df = df[df["Date_Well_Completed"] > dt.datetime(1960, 1, 1)]
-
-trim = df[["API_WellNo", "Well_Type", "Well_Name"]]
-trim.index = trim["API_WellNo"]
-dataset = trim.to_dict(orient="index")
-
-points = pickle.load(open(DATA_PATH.joinpath("points.pkl"), "rb"))
-
+trips = Trips(DATA_PATH) 
 
 # Create global chart template
 mapbox_access_token = "pk.eyJ1IjoiamFja2x1byIsImEiOiJjajNlcnh3MzEwMHZtMzNueGw3NWw5ZXF5In0.fk8k06T96Ml9CLGgKmk81w"
@@ -165,9 +155,9 @@ def update_year_slider(count_graph_selected):
     ],
 )
 def update_well_text(well_statuses, well_types, year_slider):
-
-    dff = filter_dataframe(df, well_statuses, well_types, year_slider)
-    return dff.shape[0]
+    #dff = filter_dataframe(df, well_statuses, well_types, year_slider)
+    #return dff.shape[0]
+    return 100
 
 
 """
@@ -197,7 +187,7 @@ def update_text(data):
 def make_main_figure(
     well_statuses, well_types, year_slider, main_graph_layout
 ):
-
+    full_trips_df = trips.get_trips()
     figure = map_view.gen_map(full_trips_df)
     return figure
 
