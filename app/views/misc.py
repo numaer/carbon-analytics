@@ -143,4 +143,24 @@ html.Div(
     ],
     className="row flex-display",
 ),
+
+
+@app.callback(
+    Output("aggregate_data", "data"),
+    [
+        #Input("well_statuses", "value"),
+        #Input("well_types", "value"),
+        #Input("year_slider", "value"),
+    ],
+)
+def update_production_text():#(well_statuses, well_types, year_slider):
+
+    #dff = filter_dataframe(df, well_statuses, well_types, year_slider)
+    #selected = dff["API_WellNo"].values
+    #index, gas, oil, water = produce_aggregate(selected, year_slider)
+    #return [human_format(sum(gas)), human_format(sum(oil)), human_format(sum(water))]
+    return [2000,2000,2000,2000]
 """
+
+
+

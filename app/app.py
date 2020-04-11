@@ -86,32 +86,12 @@ app.layout = html.Div(
     style={"display": "flex", "flex-direction": "column"},
 )
 
-
-
-
 # Create callbacks
 app.clientside_callback(
     ClientsideFunction(namespace="clientside", function_name="resize"),
     Output("output-clientside", "children"),
     [Input("count_graph", "figure")],
 )
-
-@app.callback(
-    Output("aggregate_data", "data"),
-    [
-        #Input("well_statuses", "value"),
-        #Input("well_types", "value"),
-        #Input("year_slider", "value"),
-    ],
-)
-def update_production_text():#(well_statuses, well_types, year_slider):
-
-    #dff = filter_dataframe(df, well_statuses, well_types, year_slider)
-    #selected = dff["API_WellNo"].values
-    #index, gas, oil, water = produce_aggregate(selected, year_slider)
-    #return [human_format(sum(gas)), human_format(sum(oil)), human_format(sum(water))]
-    return [2000,2000,2000,2000]
-
 
 # Radio -> multi
 @app.callback(
@@ -144,34 +124,30 @@ def update_year_slider(count_graph_selected):
     nums = [int(point["pointNumber"]) for point in count_graph_selected["points"]]
     return [min(nums) + 1960, max(nums) + 1961]
 
-
-# Selectors -> well text
-@app.callback(
-    Output("well_text", "children"),
-    [
-        Input("well_statuses", "value"),
-        Input("well_types", "value"),
-        Input("year_slider", "value"),
-    ],
-)
-def update_well_text(well_statuses, well_types, year_slider):
-    #dff = filter_dataframe(df, well_statuses, well_types, year_slider)
-    #return dff.shape[0]
-    return 100
-
-
-"""
 @app.callback(
     [
+        Output("well_text", "children"),
         Output("gasText", "children"),
         Output("oilText", "children"),
         Output("waterText", "children"),
     ],
     [Input("aggregate_data", "data")],
 )
-"""
-def update_text(data):
-    return data[0] + " mcf", data[1] + " bbl", data[2] + " bbl"
+def update_metrics(data):
+    def agg_metrics(df_full_trips):
+        df = df_full_trips 
+        data = {
+            'number_of_trips': len(df_full_trips),
+            'number_of_hubs': len(set(df_full_trips['StartHUBPORT_PortID'].unique()).union(
+                                set(df_full_trips['ENDHUBPORT_PortID'].unique()))),
+            'actual_co2_emission': 1337,
+            'optimized_co2_emission': 337
+        }
+
+        return data
+    full_trips_df = trips.get_trips()
+    metrics = agg_metrics(full_trips_df)
+    return metrics['number_of_trips'], metrics['number_of_hubs'], metrics['actual_co2_emission'], metrics['optimized_co2_emission']
 
 
 # Selectors -> main graph
