@@ -1,5 +1,3 @@
-# Import required libraries
-import pickle
 import copy
 import pathlib
 import dash
@@ -9,14 +7,11 @@ import pandas as pd
 from dash.dependencies import Input, Output, State, ClientsideFunction
 import dash_core_components as dcc
 import dash_html_components as html
+
+# Custom Team NYC imports
 from util.helpers import *
 from util import map_helpers
-
-# Multi-dropdown options
-from controls import COUNTIES, WELL_STATUSES, WELL_TYPES, WELL_COLORS
-
-# Custom imports
-from views import filter, header, metrics
+from views import filter, header, metrics, co2_scatter
 from views import map as map_view
 from model.trips import Trips
 
@@ -33,9 +28,6 @@ server = app.server
 # Load data
 trips = Trips(DATA_PATH) 
 
-# Create global chart template
-mapbox_access_token = "pk.eyJ1IjoiamFja2x1byIsImEiOiJjajNlcnh3MzEwMHZtMzNueGw3NWw5ZXF5In0.fk8k06T96Ml9CLGgKmk81w"
-
 layout = dict(
     autosize=True,
     automargin=True,
@@ -44,13 +36,7 @@ layout = dict(
     plot_bgcolor="#F9F9F9",
     paper_bgcolor="#F9F9F9",
     legend=dict(font=dict(size=10), orientation="h"),
-    title="Vessel Tracker",
-    mapbox=dict(
-        accesstoken=mapbox_access_token,
-        style="light",
-        center=dict(lon=-78.05, lat=42.54),
-        zoom=7,
-    ),
+    title="Hub and Spoke CO2 Map",
 )
 
 # Create app layout
@@ -87,11 +73,13 @@ app.layout = html.Div(
 )
 
 # Create callbacks
+"""
 app.clientside_callback(
     ClientsideFunction(namespace="clientside", function_name="resize"),
     Output("output-clientside", "children"),
     [Input("count_graph", "figure")],
 )
+"""
 
 @app.callback(
     [
@@ -100,9 +88,9 @@ app.clientside_callback(
         Output("oilText", "children"),
         Output("waterText", "children"),
     ],
-    [Input("aggregate_data", "data")],
+    [Input("vessel_types", "value")],
 )
-def update_metrics(data):
+def update_metrics(vessel_types):
     def agg_metrics(df_full_trips):
         df = df_full_trips 
         data = {
@@ -114,8 +102,9 @@ def update_metrics(data):
         }
 
         return data
-    full_trips_df = trips.get_trips()
-    metrics = agg_metrics(full_trips_df)
+    df_full_trips = trips.get_trips()
+    df_full_trips = df_full_trips[df_full_trips['VesselType'].isin(vessel_types)]
+    metrics = agg_metrics(df_full_trips)
     return metrics['number_of_trips'], metrics['number_of_hubs'], metrics['actual_co2_emission'], metrics['optimized_co2_emission']
 
 
@@ -123,135 +112,34 @@ def update_metrics(data):
 @app.callback(
     Output("main_graph", "figure"),
     [
-        Input("well_statuses", "value"),
-        Input("well_types", "value"),
-        Input("year_slider", "value"),
+        Input("zone_types", "value"),
+        Input("vessel_types", "value"),
+        Input("cluster_slider", "value"),
     ],
     [State("main_graph", "relayoutData")],
 )
 def make_main_figure(
-    well_statuses, well_types, year_slider, main_graph_layout
+    zone_types, vessel_types, cluster_slider, main_graph_layout
 ):
-    full_trips_df = trips.get_trips()
-    figure = map_view.gen_map(full_trips_df)
+    df_full_trips = trips.get_trips()
+    df_full_trips = df_full_trips[df_full_trips['VesselType'].isin(vessel_types)]
+    figure = map_view.gen_map(df_full_trips)
     return figure
 
 
 # Main graph -> individual graph
 @app.callback(Output("individual_graph", "figure"), 
-              [])
-def make_individual_figure():
-
+                [
+                    Input("zone_types", "value"),
+                    Input("vessel_types", "value"),
+                    Input("cluster_slider", "value"),
+                ],
+             )
+def make_individual_figure(zone_types, vessel_types, cluster_slider):
     layout_individual = copy.deepcopy(layout)
-
-    if main_graph_hover is None:
-        main_graph_hover = {
-            "points": [
-                {"curveNumber": 4, "pointNumber": 569, "customdata": 31101173130000}
-            ]
-        }
-
-    chosen = [point["customdata"] for point in main_graph_hover["points"]]
-    index, gas, oil, water = produce_individual(chosen[0])
-
-    if index is None:
-        annotation = dict(
-            text="No data available",
-            x=0.5,
-            y=0.5,
-            align="center",
-            showarrow=False,
-            xref="paper",
-            yref="paper",
-        )
-        layout_individual["annotations"] = [annotation]
-        data = []
-    else:
-        data = [
-            dict(
-                type="scatter",
-                mode="lines+markers",
-                name="Gas Produced (mcf)",
-                x=index,
-                y=gas,
-                line=dict(shape="spline", smoothing=2, width=1, color="#fac1b7"),
-                marker=dict(symbol="diamond-open"),
-            ),
-            dict(
-                type="scatter",
-                mode="lines+markers",
-                name="Oil Produced (bbl)",
-                x=index,
-                y=oil,
-                line=dict(shape="spline", smoothing=2, width=1, color="#a9bb95"),
-                marker=dict(symbol="diamond-open"),
-            ),
-            dict(
-                type="scatter",
-                mode="lines+markers",
-                name="Water Produced (bbl)",
-                x=index,
-                y=water,
-                line=dict(shape="spline", smoothing=2, width=1, color="#92d8d8"),
-                marker=dict(symbol="diamond-open"),
-            ),
-        ]
-        layout_individual["title"] = dataset[chosen[0]]["Well_Name"]
-
-    figure = dict(data=data, layout=layout_individual)
-    return figure
-
-# Selectors -> count graph
-@app.callback(
-    Output("count_graph", "figure"),
-    [
-        #Input("well_statuses", "value"),
-        #Input("well_types", "value"),
-        #Input("year_slider", "value"),
-    ],
-)
-def make_count_figure():#well_statuses, well_types, year_slider):
-    layout_count = copy.deepcopy(layout)
-
-    #dff = filter_dataframe(df, well_statuses, well_types, [1960, 2017])
-    dff = df
-    g = dff[["API_WellNo", "Date_Well_Completed"]]
-    g.index = g["Date_Well_Completed"]
-    g = g.resample("A").count()
-
-    colors = []
-    for i in range(1960, 2018):
-        if i >= int(year_slider[0]) and i < int(year_slider[1]):
-            colors.append("rgb(123, 199, 255)")
-        else:
-            colors.append("rgba(123, 199, 255, 0.2)")
-
-    data = [
-        dict(
-            type="scatter",
-            mode="markers",
-            x=g.index,
-            y=g["API_WellNo"] / 2,
-            name="All Wells",
-            opacity=0,
-            hoverinfo="skip",
-        ),
-        dict(
-            type="bar",
-            x=g.index,
-            y=g["API_WellNo"],
-            name="All Wells",
-            marker=dict(color=colors),
-        ),
-    ]
-
-    layout_count["title"] = "Optimized CO2 vs Actual CO2"
-    layout_count["dragmode"] = "select"
-    layout_count["showlegend"] = False
-    layout_count["autosize"] = True
-
-    figure = dict(data=data, 
-                  layout=layout_count)
+    df_full_trips = trips.get_trips()
+    df_full_trips = df_full_trips[df_full_trips['VesselType'].isin(vessel_types)]
+    figure = co2_scatter.get_co2_scatter(df_full_trips)
     return figure
 
 # Main

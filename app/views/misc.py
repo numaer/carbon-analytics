@@ -164,3 +164,17 @@ def update_production_text():#(well_statuses, well_types, year_slider):
 
 
 
+
+"""
+def agg_metrics(df_full_trips):
+    df = df_full_trips 
+    data = {
+        'number_of_trips': len(df_full_trips),
+        'number_of_hubs': len(set(df_full_trips['StartHUBPORT_PortID'].unique()).union(
+                            set(df_full_trips['ENDHUBPORT_PortID'].unique()))),
+        'actual_co2_emission': 1337,
+        'optimized_co2_emission': 337
+    }
+
+    return data
+"""

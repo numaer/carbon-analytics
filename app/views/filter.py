@@ -39,7 +39,7 @@ def get_filter(trips):
             className="control_label",
             ),
         dcc.Slider(
-            id="year_slider",
+            id="cluster_slider",
             min=1,
             max=30,
             value=5,
@@ -49,7 +49,7 @@ def get_filter(trips):
             ),
         html.P("Filter by AIS zones:", className="control_label"),
         dcc.Dropdown(
-                id="well_statuses",
+                id="zone_types",
                 options=zone_options,
                 multi=True,
                 value=zone_types,
@@ -57,7 +57,7 @@ def get_filter(trips):
                 ),
         html.P("Filter by vessel type:", className="control_label"),
         dcc.Dropdown(
-                id="well_types",
+                id="vessel_types",
                 options=vessel_options,
                 multi=True,
                 value=vessel_types,

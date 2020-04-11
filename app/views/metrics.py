@@ -39,12 +39,17 @@ def get_metrics():
                 id="info-container",
                 className="row container-display",
                 ),
+                ],
+                id="right-column",
+                className="eight columns",
+                )
+
+"""
+If we get the optimized co2 data, put this back in!
+
                 html.Div(
                         [dcc.Graph(id="count_graph")],
                         id="countGraphContainer",
                         className="pretty_container",
                         ),
-                ],
-                id="right-column",
-                className="eight columns",
-                )
+"""
