@@ -13,72 +13,54 @@ import dash_html_components as html
 from controls import COUNTIES, WELL_STATUSES, WELL_TYPES, WELL_COLORS
 
 # Create controls
-county_options = [
-    {"label": str(COUNTIES[county]), "value": str(county)} for county in COUNTIES
-]
+AVAILABLE_ZONES = ["Zone 20"]
 
-well_status_options = [
-    {"label": str(WELL_STATUSES[well_status]), "value": str(well_status)}
-    for well_status in WELL_STATUSES
-]
+def gen_options(vals):
+    """
+    generate options via not the black-scholes equation
+    """
+    return [{"label": v, "value": v} for v in vals]
 
-well_type_options = [
-    {"label": str(WELL_TYPES[well_type]), "value": str(well_type)}
-    for well_type in WELL_TYPES
-]
+def get_filter(trips):
+    df = trips.get_trips()    
 
-def get_filter():
+    # Gen vessel options
+    vessel_types = list(df['VesselType'].unique())
+    vessel_options = gen_options(vessel_types)
+
+    # Gen zones options
+    zone_types = AVAILABLE_ZONES
+    zone_options = gen_options(zone_types)
+
     return html.Div(
         [
         html.P(
             "Filter by cluster size",
             className="control_label",
             ),
-        dcc.RangeSlider(
+        dcc.Slider(
             id="year_slider",
             min=1,
             max=30,
-            value=[5],
-            step=5,
+            value=5,
+            step=None,
             className="dcc_control",
             marks={1: "1", 5:"5", 30:"30"}
             ),
         html.P("Filter by AIS zones:", className="control_label"),
-        dcc.RadioItems(
-            id="well_status_selector",
-            options=[
-            {"label": "All ", "value": "all"},
-            {"label": "Active only ", "value": "active"},
-            {"label": "Customize ", "value": "custom"},
-            ],
-            value="active",
-            labelStyle={"display": "inline-block"},
-            className="dcc_control",
-            ),
         dcc.Dropdown(
                 id="well_statuses",
-                options=well_status_options,
+                options=zone_options,
                 multi=True,
-                value=list(WELL_STATUSES.keys()),
+                value=zone_types,
                 className="dcc_control",
                 ),
         html.P("Filter by vessel type:", className="control_label"),
-        dcc.RadioItems(
-                id="well_type_selector",
-                options=[
-                {"label": "All ", "value": "all"},
-                {"label": "Productive only ", "value": "productive"},
-                {"label": "Customize ", "value": "custom"},
-                ],
-                value="productive",
-                labelStyle={"display": "inline-block"},
-                className="dcc_control",
-                ),
         dcc.Dropdown(
                 id="well_types",
-                options=well_type_options,
+                options=vessel_options,
                 multi=True,
-                value=list(WELL_TYPES.keys()),
+                value=vessel_types,
                 className="dcc_control",
                 ),
         ],

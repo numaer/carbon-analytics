@@ -65,7 +65,7 @@ app.layout = html.Div(
         html.Div(id="output-clientside"),
         header.get_header(),
         html.Div([metrics.get_metrics(),
-                 filter.get_filter()],
+                 filter.get_filter(trips)],
             className="row flex-display",
         ),
         html.Div(
@@ -92,37 +92,6 @@ app.clientside_callback(
     Output("output-clientside", "children"),
     [Input("count_graph", "figure")],
 )
-
-# Radio -> multi
-@app.callback(
-    Output("well_statuses", "value"), [Input("well_status_selector", "value")]
-)
-def display_status(selector):
-    if selector == "all":
-        return list(WELL_STATUSES.keys())
-    elif selector == "active":
-        return ["AC"]
-    return []
-
-
-# Radio -> multi
-@app.callback(Output("well_types", "value"), [Input("well_type_selector", "value")])
-def display_type(selector):
-    if selector == "all":
-        return list(WELL_TYPES.keys())
-    elif selector == "productive":
-        return ["GD", "GE", "GW", "IG", "IW", "OD", "OE", "OW"]
-    return []
-
-# Slider -> count graph
-@app.callback(Output("year_slider", "value"), [Input("count_graph", "selectedData")])
-def update_year_slider(count_graph_selected):
-
-    if count_graph_selected is None:
-        return [1990, 2010]
-
-    nums = [int(point["pointNumber"]) for point in count_graph_selected["points"]]
-    return [min(nums) + 1960, max(nums) + 1961]
 
 @app.callback(
     [
