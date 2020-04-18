@@ -71,6 +71,7 @@ def get_filter(trips):
     zone_types = AVAILABLE_ZONES
     zone_types = list(set(df['StartHUBPORT_PortID'].unique()).union(set(df['ENDHUBPORT_PortID'].unique())))
     zone_options = gen_options(zone_types)
+    zone_options.append({"label": "All", "value": "All"})
 
     return html.Div(
         [
@@ -106,8 +107,8 @@ def get_filter(trips):
         dcc.Dropdown(
                 id="zone_types",
                 options=zone_options,
-                multi=True,
-                value=zone_types[:5],
+                multi=False,
+                value="All",
                 className="dcc_control",
                 ),
         html.P("Filter by vessel type:", className="control_label"),

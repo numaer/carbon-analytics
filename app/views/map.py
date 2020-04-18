@@ -9,21 +9,22 @@ from dash.dependencies import Input, Output, State, ClientsideFunction
 import dash_core_components as dcc
 import dash_html_components as html
 
-from controls import COUNTIES, WELL_STATUSES, WELL_TYPES, WELL_COLORS
 from util.map_helpers import *
 
 """
 Add hub and spokes
 """
 
-def gen_map(df_full_trips, lines=True):
+def gen_map(df_full_trips, lines=True, zone_types='All'):
     fig = go.Figure()
 
-    if lines: 
+    if lines and not zone_types == 'All': 
         df_fig_arr = [gen_df_spokes_start(df_full_trips),
                      gen_df_hub_start(df_full_trips),
                      gen_df_hub_end(df_full_trips),
                      gen_df_spoke_end(df_full_trips)]
+    elif zone_types == 'All':
+        df_fig_arr = [gen_df_hub_start(df_full_trips),gen_df_hub_end(df_full_trips)]
     else:
         df_fig_arr = [gen_df_spokes_start(df_full_trips),
                      gen_df_spoke_end(df_full_trips)]
@@ -47,7 +48,8 @@ def gen_map(df_full_trips, lines=True):
     """
     Add paths
     """
-    if lines:
+    print(zone_types)
+    if not zone_types == 'All':
         for row in df_full_trips.itertuples():
             fig.add_trace(go.Scattergeo(
                 lon=[row.LON_SPOKEStartPort, row.StartHUBPORT_LON],
@@ -81,14 +83,13 @@ def gen_map(df_full_trips, lines=True):
     #lat_range, lon_range = get_lat_lon_range(gen_df_spoke_end(df_full_trips))
     #scope = get_scope(lat_range, lon_range)
     title = f'Hub and Spoke Network'
-    if not lines:
-        title = "Original Network"
+
     layout = dict(title=title,
                   showlegend=True,
                   geo=dict(
      #                 scope=scope,  # this is the only place we changed
                       projection = go.layout.geo.Projection(
-                          type = 'azimuthal equal area'
+                          type='azimuthal equal area'
                         ),
                       center={'lat': df_full_trips['LAT_SPOKEStartPort'].mean(), 
                               'lon': df_full_trips['LON_SPOKEStartPort'].mean()},

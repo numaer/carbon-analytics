@@ -64,18 +64,15 @@ class Trips():
             c = np.format_float_positional(c)
             df = pd.read_csv(self.data_path.joinpath(f"clusteredDF_{(c)}.csv"), low_memory=False)
             df['cluster_size'] = (c)
+            df['co2_total'] = df[['CO2_SpokeStart', 'CO2_SpokeEnd', 'CO2_Hub_Hub']].sum(axis=1)
             self.df_clusters.append(df)
         self.df_clusters = pd.concat(self.df_clusters)
 
-    def get_trips(self, cluster_size=1, hub_efficiency=None, zone_types=None, vessel_types=None):
+    def get_trips(self, cluster_size=1, hub_efficiency=None, zone_types="All", vessel_types=None):
         cluster_size = np.format_float_positional(cluster_size)
-        #df = pd.read_csv(self.data_path.joinpath(f"clusteredDF_{cluster_size}.csv"), low_memory=False)
         df = self.df_clusters[self.df_clusters['cluster_size'] == cluster_size]
-        if zone_types:
-            df = df[(df['StartHUBPORT_PortID'].isin(zone_types)) & df['ENDHUBPORT_PortID'].isin(zone_types)]
-        if hub_efficiency:
-            df = df.sort_values(by=['Hub_TEU'], ascending=True)
-            df = df[:int(len(df)*hub_efficiency)]
+        if zone_types != "All":
+            df = df[(df['StartHUBPORT_PortID'] == zone_types) | (df['ENDHUBPORT_PortID'] == zone_types)]
         if vessel_types:
             df = df[df['VesselType'].isin(vessel_types)]
 

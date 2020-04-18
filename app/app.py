@@ -9,7 +9,6 @@ import dash_core_components as dcc
 import dash_html_components as html
 
 # Custom Team NYC imports
-from util.helpers import *
 from util import map_helpers
 from views import filter, header, metrics, co2_scatter
 from views import map as map_view
@@ -94,15 +93,6 @@ app.layout = html.Div(
     style={"display": "flex", "flex-direction": "column"},
 )
 
-# Create callbacks
-"""
-app.clientside_callback(
-    ClientsideFunction(namespace="clientside", function_name="resize"),
-    Output("output-clientside", "children"),
-    [Input("count_graph", "figure")],
-)
-"""
-
 @app.callback(
     [
         Output("well_text", "children"),
@@ -131,7 +121,7 @@ def update_metrics(zone_types, vessel_types, cluster_slider, hub_efficiency):
         return data
     df_full_trips = trips.get_trips(cluster_size=cluster_slider,
                                     hub_efficiency=None,
-                                    zone_types=None,
+                                    zone_types="All",
                                     vessel_types=vessel_types)
     metrics = agg_metrics(df_full_trips)
     metrics['actual_co2_emission'] /= 1000000
@@ -158,24 +148,25 @@ def make_main_figure(
     zone_types, vessel_types, cluster_slider, hub_efficiency, main_graph_layout
 ):
     df_full_trips = trips.get_trips(cluster_size=cluster_slider,
-                                    hub_efficiency=hub_efficiency,
+                                    hub_efficiency=None,
                                     zone_types=zone_types,
                                     vessel_types=vessel_types)
-    figure = map_view.gen_map(df_full_trips)
+    figure = map_view.gen_map(df_full_trips, 
+                              zone_types=zone_types)
     return figure
 
 """
 ## Mapbox graph plotting start port by port ID assigned
 """
 @app.callback(
-    Output("mapbox_graph", "figure"),
+    Output("original_graph", "figure"),
     [
         Input("zone_types", "value"),
         Input("vessel_types", "value"),
         Input("cluster_slider", "value"),
         Input("hub_efficiency", "value"),
     ],
-    [State("mapbox_graph", "relayoutData")],
+    [State("original_graph", "relayoutData")],
 )
 def make_mapbox_figure(
     zone_types, vessel_types, cluster_slider, hub_efficiency, main_graph_layout
@@ -209,29 +200,6 @@ def make_mapbox_figure(
     map_view.gen_map(df_full_trips, lines=False)
     return figure
 
-"""
-"""
-@app.callback(
-    Output("original_graph", "figure"),
-    [
-        Input("zone_types", "value"),
-        Input("vessel_types", "value"),
-        Input("cluster_slider", "value"),
-        Input("hub_efficiency", "value"),
-    ],
-    [State("original_graph", "relayoutData")],
-)
-def make_original_figure(
-    zone_types, vessel_types, cluster_slider, hub_efficiency, main_graph_layout
-):
-    df_full_trips = trips.get_trips(cluster_size=cluster_slider,
-                                    hub_efficiency=0.01,
-                                    zone_types=zone_types,
-                                    vessel_types=vessel_types)
-    print(len(df_full_trips))
-    figure = map_view.gen_map(df_full_trips, lines=False)
-    return figure
-
 # Main graph -> individual graph
 @app.callback(Output("individual_graph", "figure"), 
                 [
@@ -258,11 +226,12 @@ def make_teu_figure(main_graph_hover):
 
     if main_graph_hover:
         points_data = main_graph_hover['points'][0]
+        text = points_data['text']
         df = df[(df['LON_SPOKEStartPort'] == points_data['lon']) |
                 (df['StartHUBPORT_LON'] == points_data['lon']) |
                 (df['LON_SPOKEEndPort'] == points_data['lon']) |
                 (df['ENDHUBPORT_LON'] == points_data['lon'])]
-        df = df.drop_duplicates(subset=['cluster_size'])
+        #df = df.drop_duplicates(subset=['cluster_size'])
         df = df.sort_values(by=['cluster_size'], ascending=True)
 
         data = [
@@ -271,7 +240,7 @@ def make_teu_figure(main_graph_hover):
                 mode='lines+markers',
                 name='Epsilon vs TEU',
                 x=df['cluster_size'],
-                y=df['Hub_TEU'],
+                y=df['co2_total'],
                 xaxis_title="Cluster Size (Epsilon)",
                 yaxis_title="CO2 Efficiency (TEU)",
                 line=dict(
@@ -285,7 +254,7 @@ def make_teu_figure(main_graph_hover):
         ]
     else:
         data = []
-    layout_individual["title"] = "Cluster Size vs TEU"
+    layout_individual["title"] = "Cluster Size vs CO2 Emissions"
     layout_individual["xaxis_title"] = "Cluster Size (Epsilon)"
     layout_individual["yaxis_title"] = "CO2 Efficiency (TEU)"
     figure = dict(data=data, layout=layout_individual)
