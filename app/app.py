@@ -27,6 +27,7 @@ server = app.server
 
 # Load data
 trips = Trips(DATA_PATH) 
+df_full_trips = trips.get_trips
 
 layout = dict(
     autosize=False,
@@ -78,8 +79,17 @@ app.layout = html.Div(
                 ),
             ],
             className="row flex-display",
+        
         ),
-
+       # dcc scatter mapbox
+       html.Div(
+            [
+                html.Div(
+                    [dcc.Graph(id="mapbox_graph")],
+                    className="pretty_container twelve columns",
+                )
+            ],
+        ),    
     ],
     id="mainContainer",
     style={"display": "flex", "flex-direction": "column"},
@@ -156,7 +166,51 @@ def make_main_figure(
     return figure
 
 """
-PLACEHOLDER FOR TJS GRAPH
+## Mapbox graph plotting start port by port ID assigned
+"""
+@app.callback(
+    Output("mapbox_graph", "figure"),
+    [
+        Input("zone_types", "value"),
+        Input("vessel_types", "value"),
+        Input("cluster_slider", "value"),
+        Input("hub_efficiency", "value"),
+    ],
+    [State("mapbox_graph", "relayoutData")],
+)
+def make_mapbox_figure(
+    zone_types, vessel_types, cluster_slider, hub_efficiency, main_graph_layout
+):
+    df_full_trips = trips.get_trips(cluster_size=0.001,
+                                    hub_efficiency=None,
+                                    zone_types=zone_types,
+                                    vessel_types=vessel_types)                       
+    figure = {
+            'data': [{
+                'lat': df_full_trips['LAT_SPOKEStartPort'],
+                'lon': df_full_trips['LON_SPOKEStartPort'],
+                'marker':{
+                    'color': df_full_trips['StartHUBPORT_PortID'],
+                    'size': 10,
+                    'opacity': 1,
+                    'colorscale':'Jet'
+                },
+                'customdata': df_full_trips['StartHUBPORT_PortID'],
+                'type':'scattermapbox' ## Different types of mapbox is available
+            }],
+            'layout':{
+                'mapbox':{
+                    'accesstoken':'pk.eyJ1IjoiY2hyaWRkeXAiLCJhIjoiY2ozcGI1MTZ3MDBpcTJ3cXR4b3owdDQwaCJ9.8jpMunbKjdq1anXwU5gxIw',
+                    'center': dict(lon= -75.629536, lat= 24.619554)
+                }, ##Access token is taken from https://github.com/plotly/dash-recipes/blob/master/walmart-hover.py
+                'hovermode': 'closest',
+                'margin':{'l':30, 'r':30, 'b':30, 't':30},
+            },
+        }
+    map_view.gen_map(df_full_trips, lines=False)
+    return figure
+
+"""
 """
 @app.callback(
     Output("original_graph", "figure"),
