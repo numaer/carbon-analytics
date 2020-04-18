@@ -97,7 +97,7 @@ def get_filter(trips):
             id="hub_efficiency",
             min=0,
             max=1,
-            value=0.25,
+            value=0.10,
             step=0.05,
             className="dcc_control",
             marks={0:"0%", .25:"25%", 0.50:"50%", 0.75:"75%", 1:"100%"}

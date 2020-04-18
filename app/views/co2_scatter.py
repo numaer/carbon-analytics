@@ -32,6 +32,9 @@ def _generate_scatter_df(df_full_trips):
 
 def get_co2_scatter(df_full_trips):
     fig = px.scatter_3d(_generate_scatter_df(df_full_trips), 
+                        title=dict(
+                            text="Vessel Dimensions vs CO2 Efficiency",
+                        ),
                         x='Length', 
                         y='Width', 
                         z='CO2 Efficiency',

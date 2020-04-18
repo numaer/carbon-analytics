@@ -66,12 +66,11 @@ class Trips():
             df['cluster_size'] = (c)
             self.df_clusters.append(df)
         self.df_clusters = pd.concat(self.df_clusters)
-        print(self.df_clusters.columns)
-
 
     def get_trips(self, cluster_size=1, hub_efficiency=None, zone_types=None, vessel_types=None):
         cluster_size = np.format_float_positional(cluster_size)
-        df = pd.read_csv(self.data_path.joinpath(f"clusteredDF_{cluster_size}.csv"), low_memory=False)
+        #df = pd.read_csv(self.data_path.joinpath(f"clusteredDF_{cluster_size}.csv"), low_memory=False)
+        df = self.df_clusters[self.df_clusters['cluster_size'] == cluster_size]
         if zone_types:
             df = df[(df['StartHUBPORT_PortID'].isin(zone_types)) & df['ENDHUBPORT_PortID'].isin(zone_types)]
         if hub_efficiency:

@@ -73,7 +73,7 @@ app.layout = html.Div(
                     className="pretty_container seven columns",
                 ),
                 html.Div(
-                    [dcc.Graph(id="individual_graph")],
+                    [dcc.Graph(id="individual_graph", config={'displayModeBar': False})],
                     className="pretty_container five columns",
                 ),
             ],
@@ -171,13 +171,13 @@ PLACEHOLDER FOR TJS GRAPH
 def make_original_figure(
     zone_types, vessel_types, cluster_slider, hub_efficiency, main_graph_layout
 ):
-    df_full_trips = trips.get_trips(cluster_size=0.001,
-                                    hub_efficiency=None,
+    df_full_trips = trips.get_trips(cluster_size=cluster_slider,
+                                    hub_efficiency=0.01,
                                     zone_types=zone_types,
                                     vessel_types=vessel_types)
+    print(len(df_full_trips))
     figure = map_view.gen_map(df_full_trips, lines=False)
     return figure
-
 
 # Main graph -> individual graph
 @app.callback(Output("individual_graph", "figure"), 
@@ -237,7 +237,6 @@ def make_teu_figure(main_graph_hover):
     layout_individual["yaxis_title"] = "CO2 Efficiency (TEU)"
     figure = dict(data=data, layout=layout_individual)
     return figure
-
 
 # Main
 if __name__ == "__main__":

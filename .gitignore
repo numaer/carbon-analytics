@@ -44,5 +44,4 @@ package-lock.json
 geckodriver.log
 *.iml
 
-*.csv
 *.zip

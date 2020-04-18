@@ -103,9 +103,9 @@ def gen_df_hub_start(df_full_trips):
     df.sort_values(by='count', ascending=False)
     df.columns = ['port_id', 'lon', 'lat', 'count']
     df['color'] = 'orange'
-    df['text'] = df['port_id'].apply(lambda x: """Port ID: %s""" % x)
+    df['text'] = df['port_id'].apply(lambda x: """Hub ID: %s""" % x)
     df['name'] = 'Hub Start'
-    df['size'] = 8 + df['count']
+    df['size'] = 8 + df['count']*0.5
     df.head()
     return df
 
@@ -123,9 +123,9 @@ def gen_df_hub_end(df_full_trips):
     df.sort_values(by='count', ascending=False)
     df['color'] = 'blue'
     df.columns = ['port_id', 'lon', 'lat', 'count', 'color']
-    df['text'] = df['port_id'].apply(lambda x: """Port ID: %s""" % x)
+    df['text'] = df['port_id'].apply(lambda x: """Hub ID: %s""" % x)
     df['name'] = 'Hub End'
-    df['size'] = 8 + df['count']
+    df['size'] = 8 + df['count']*0.5
     df.head()
     return df
 

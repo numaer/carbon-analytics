@@ -43,7 +43,6 @@ def gen_map(df_full_trips, lines=True):
                         )))
         
     #fig.show()
-    #print(df_full_trips.columns)
 
     """
     Add paths
@@ -82,6 +81,8 @@ def gen_map(df_full_trips, lines=True):
     #lat_range, lon_range = get_lat_lon_range(gen_df_spoke_end(df_full_trips))
     #scope = get_scope(lat_range, lon_range)
     title = f'Hub and Spoke Network'
+    if not lines:
+        title = "Original Network"
     layout = dict(title=title,
                   showlegend=True,
                   geo=dict(
