@@ -27,7 +27,6 @@ server = app.server
 
 # Load data
 trips = Trips(DATA_PATH) 
-df_full_trips = trips.get_trips
 
 layout = dict(
     autosize=False,
