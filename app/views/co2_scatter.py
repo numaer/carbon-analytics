@@ -27,7 +27,7 @@ def _generate_scatter_df(df_full_trips):
     print(df_full_trips.columns)
     df = df_full_trips[['Length', 'Width', 'VesselType']]
     df['Vessel Type'] = df['VesselType']
-    df['CO2 Efficiency'] = df_full_trips['Hub_TEU']
+    df['CO2 Efficiency'] = df_full_trips['Individual_TEU']
     df.head()
     return df
 

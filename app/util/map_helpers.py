@@ -12,67 +12,18 @@ import dash
 import math
 import datetime as dt
 import pandas as pd
+import numpy as np
 from dash.dependencies import Input, Output, State, ClientsideFunction
 import dash_core_components as dcc
 import dash_html_components as html
 
-# Multi-dropdown options
-from controls import COUNTIES, WELL_STATUSES, WELL_TYPES, WELL_COLORS
-
-
-import pandas as pd
-import numpy as np
 import math
-import matplotlib.pyplot as plt
-from time import process_time
-from sklearn.cluster import DBSCAN
 import plotly.graph_objects as go
 import plotly.express as px
 
 """
 HELPERS
 """
-
-def get_lat_lon_range(df):
-    """
-    Return the range of lat and lon in the data.
-
-    Credits: https://github.com/ekhoda/plotly_hub_and_spoke
-    """
-    return [df['lat'].min(), 
-            df['lat'].max()], [df['lon'].min(), df['lon'].max()]
-
-def get_scope(lat_range, lon_range):
-    """
-    Assign the proper scope based on range of data's lat/lon.
-
-    Credits: https://github.com/ekhoda/plotly_hub_and_spoke
-    """
-    us_lat_rng = [24, 55]
-    us_lon_rng = [-127, -50]
-    na_lat_rng = [15, 85]
-    na_lon_rng = [-170, -50]
-    eu_lat_rng = [30, 80]
-    eu_lon_rng = [-20, 70]
-    sa_lat_rng = [-60, 12]
-    sa_lon_rng = [-81, -34]
-
-    if (lat_range[0] >= us_lat_rng[0] and lat_range[1] <= us_lat_rng[1]
-            and lon_range[0] >= us_lon_rng[0] and lon_range[1] <= us_lon_rng[1]):
-        scope = 'usa'
-    elif (lat_range[0] >= na_lat_rng[0] and lat_range[1] <= na_lat_rng[1]
-            and lon_range[0] >= na_lon_rng[0] and lon_range[1] <= na_lon_rng[1]):
-        scope = 'north america'
-    elif (lat_range[0] >= eu_lat_rng[0] and lat_range[1] <= eu_lat_rng[1]
-          and lon_range[0] >= eu_lon_rng[0] and lon_range[1] <= eu_lon_rng[1]):
-        scope = 'europe'
-    elif (lat_range[0] >= sa_lat_rng[0] and lat_range[1] <= sa_lat_rng[1]
-          and lon_range[0] >= sa_lon_rng[0] and lon_range[1] <= sa_lon_rng[1]):
-        scope = 'south america'
-    else:  # can add asia and africa
-        scope = 'world'  # default
-    return scope
-
 
 """
 Generates the data needed to funnel trip data into a plotly geoscatter map

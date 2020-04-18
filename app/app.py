@@ -83,7 +83,7 @@ app.layout = html.Div(
        html.Div(
             [
                 html.Div(
-                    [dcc.Graph(id="mapbox_graph")],
+                    [dcc.Graph(id="static_graph")],
                     className="pretty_container twelve columns",
                 )
             ],
@@ -104,32 +104,35 @@ app.layout = html.Div(
         Input("zone_types", "value"),
         Input("vessel_types", "value"),
         Input("cluster_slider", "value"),
-        Input("hub_efficiency", "value"),
     ],
 )
-def update_metrics(zone_types, vessel_types, cluster_slider, hub_efficiency):
-    def agg_metrics(df_full_trips):
+def update_metrics(zone_types, vessel_types, cluster_slider):
+    def agg_metrics(df_full_trips, df_raw_trips):
         df = df_full_trips 
         data = {
             'number_of_trips': len(df_full_trips),
             'number_of_hubs': len(set(df_full_trips['StartHUBPORT_PortID'].unique()).union(
                                 set(df_full_trips['ENDHUBPORT_PortID'].unique()))),
-            'actual_co2_emission': df_full_trips['Individual_TEU'].sum(),
-            'optimized_co2_emission': df_full_trips['Hub_TEU'].sum()
+            'actual_co2_emission': df_raw_trips['co2_total'].sum(),
+            'optimized_co2_emission': df_full_trips['co2_total'].sum()
         }
 
         return data
+
+    df_raw_trips = trips.get_trips(cluster_size=0.001,
+                                    zone_types=zone_types,
+                                    vessel_types=vessel_types)                       
+
     df_full_trips = trips.get_trips(cluster_size=cluster_slider,
-                                    hub_efficiency=None,
-                                    zone_types="All",
+                                    zone_types=zone_types,
                                     vessel_types=vessel_types)
-    metrics = agg_metrics(df_full_trips)
-    metrics['actual_co2_emission'] /= 1000000
-    metrics['actual_co2_emission'] = metrics['actual_co2_emission'].round(1)
-    metrics['actual_co2_emission'] = f"{metrics['actual_co2_emission']} M TEU"
-    metrics['optimized_co2_emission'] /= 1000000
-    metrics['optimized_co2_emission'] = metrics['optimized_co2_emission'].round(1)
-    metrics['optimized_co2_emission'] = f"{metrics['optimized_co2_emission']} M TEU"
+    metrics = agg_metrics(df_full_trips, df_raw_trips)
+    metrics['actual_co2_emission'] /= 1000000000
+    metrics['actual_co2_emission'] = metrics['actual_co2_emission'].round(2)
+    metrics['actual_co2_emission'] = f"{metrics['actual_co2_emission']} kT"
+    metrics['optimized_co2_emission'] /= 1000000000
+    metrics['optimized_co2_emission'] = metrics['optimized_co2_emission'].round(2)
+    metrics['optimized_co2_emission'] = f"{metrics['optimized_co2_emission']} kT"
     return metrics['number_of_trips'], metrics['number_of_hubs'], metrics['actual_co2_emission'], metrics['optimized_co2_emission']
 
 
@@ -140,15 +143,13 @@ def update_metrics(zone_types, vessel_types, cluster_slider, hub_efficiency):
         Input("zone_types", "value"),
         Input("vessel_types", "value"),
         Input("cluster_slider", "value"),
-        Input("hub_efficiency", "value"),
     ],
     [State("main_graph", "relayoutData")],
 )
 def make_main_figure(
-    zone_types, vessel_types, cluster_slider, hub_efficiency, main_graph_layout
+    zone_types, vessel_types, cluster_slider, main_graph_layout
 ):
     df_full_trips = trips.get_trips(cluster_size=cluster_slider,
-                                    hub_efficiency=None,
                                     zone_types=zone_types,
                                     vessel_types=vessel_types)
     figure = map_view.gen_map(df_full_trips, 
@@ -164,15 +165,13 @@ def make_main_figure(
         Input("zone_types", "value"),
         Input("vessel_types", "value"),
         Input("cluster_slider", "value"),
-        Input("hub_efficiency", "value"),
     ],
     [State("original_graph", "relayoutData")],
 )
 def make_mapbox_figure(
-    zone_types, vessel_types, cluster_slider, hub_efficiency, main_graph_layout
+    zone_types, vessel_types, cluster_slider, main_graph_layout
 ):
     df_full_trips = trips.get_trips(cluster_size=0.001,
-                                    hub_efficiency=None,
                                     zone_types=zone_types,
                                     vessel_types=vessel_types)                       
     figure = {
@@ -206,57 +205,101 @@ def make_mapbox_figure(
                     Input("zone_types", "value"),
                     Input("vessel_types", "value"),
                     Input("cluster_slider", "value"),
-                    Input("hub_efficiency", "value"),
                 ]
              )
-def make_scatter_figure(zone_types, vessel_types, cluster_slider, hub_efficiency):
+def make_scatter_figure(zone_types, vessel_types, cluster_slider):
     layout_individual = copy.deepcopy(layout)
     df_full_trips = trips.get_trips(cluster_size=cluster_slider,
+                                    zone_types=zone_types,
                                     vessel_types=vessel_types)
     figure = co2_scatter.get_co2_scatter(df_full_trips)
     return figure
 
 # Main graph -> individual graph
 @app.callback(Output('teu_graph', 'figure'),
-              [Input('main_graph', 'hoverData')])
-def make_teu_figure(main_graph_hover):
+              [Input("zone_types", "value"), 
+                Input("vessel_types", "value"),
+                Input('main_graph', 'hoverData')])
+def make_teu_figure(zone_types, vessel_types, main_graph_hover):
 
     layout_individual = copy.deepcopy(layout)
-    df = trips.df_clusters
+    df = trips.get_trips(cluster_size=None,
+                        zone_types=zone_types,
+                        vessel_types=vessel_types)
 
+    data = []
     if main_graph_hover:
         points_data = main_graph_hover['points'][0]
-        text = points_data['text']
-        df = df[(df['LON_SPOKEStartPort'] == points_data['lon']) |
-                (df['StartHUBPORT_LON'] == points_data['lon']) |
-                (df['LON_SPOKEEndPort'] == points_data['lon']) |
-                (df['ENDHUBPORT_LON'] == points_data['lon'])]
-        #df = df.drop_duplicates(subset=['cluster_size'])
-        df = df.sort_values(by=['cluster_size'], ascending=True)
-
-        data = [
-            dict(
-                type='scatter',
-                mode='lines+markers',
-                name='Epsilon vs TEU',
-                x=df['cluster_size'],
-                y=df['co2_total'],
-                xaxis_title="Cluster Size (Epsilon)",
-                yaxis_title="CO2 Efficiency (TEU)",
-                line=dict(
-                    shape="spline",
-                    smoothing=2,
-                    width=1,
-                    color='#92d8d8'
-                ),
-                marker=dict(symbol='diamond-open')
-            )
-        ]
-    else:
-        data = []
+        if 'text' in points_data:
+            text = points_data['text']
+            if 'MMSI' in text or 'Hub' in text:
+                text = text.split()[-1]
+                txt_orig = text.split()[0]
+                if 'MMSI' in txt_orig:
+                    df = df[df['MMSI'] == int(text)]
+                elif 'Hub' in txt_orig:
+                    df = df[df['StartHUBPORT_PortID'] == float(text)]
+                    df = df[df['ENDHUBPORT_PortID'] == float(text)]
+                df = df[(df['LON_SPOKEStartPort'] == points_data['lon']) |
+                        (df['StartHUBPORT_LON'] == points_data['lon']) |
+                        (df['LON_SPOKEEndPort'] == points_data['lon']) |
+                        (df['ENDHUBPORT_LON'] == points_data['lon'])]
+                #df = df.drop_duplicates(subset=['cluster_size'])
+                df = df.sort_values(by=['cluster_size'], ascending=True)
+                data = [
+                    dict(
+                        type='scatter',
+                        mode='lines+markers',
+                        name='Epsilon vs CO2 Total',
+                        x=df['cluster_size'],
+                        y=df['co2_total'],
+                        xaxis_title="Cluster Size (Epsilon)",
+                        yaxis_title="CO2 Efficiency (TEU)",
+                        line=dict(
+                            shape="spline",
+                            smoothing=2,
+                            width=1,
+                            color='#92d8d8'
+                        ),
+                        marker=dict(symbol='diamond-open')
+                    )
+                ]
+                
     layout_individual["title"] = "Cluster Size vs CO2 Emissions"
     layout_individual["xaxis_title"] = "Cluster Size (Epsilon)"
     layout_individual["yaxis_title"] = "CO2 Efficiency (TEU)"
+    figure = dict(data=data, layout=layout_individual)
+    return figure
+
+
+# Main graph -> individual graph
+@app.callback(Output('static_graph', 'figure'),
+              [Input("zone_types", "value")])
+def make_static_graph(zone_types):
+    layout_individual = copy.deepcopy(layout)
+    df = trips.get_static_graph()
+
+    df = df.sort_values(by=['epsilons'], ascending=True)
+    data = [
+        dict(
+            type='scatter',
+            mode='lines+markers',
+            name='Epsilon vs CO2 Total',
+            x=df['epsilons'],
+            y=df['Carbon Emmissions'],
+            xaxis_title="Cluster Size (Epsilon)",
+            yaxis_title="CO2 Efficiency (TEU)",
+            line=dict(
+                shape="spline",
+                smoothing=2,
+                width=1,
+                color='#92d8d8'
+            ),
+            marker=dict(symbol='diamond-open')
+        )
+    ]
+                
+    layout_individual["title"] = "Overall Optimal Epsilon vs CO2 Emissions"
     figure = dict(data=data, layout=layout_individual)
     return figure
 
