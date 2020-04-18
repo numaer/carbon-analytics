@@ -24,8 +24,9 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 def _generate_scatter_df(df_full_trips):
-    df = df_full_trips[['Length', 'Width', 'VesselType']]
-    df['CO2 Emitted'] = df['Length'].copy().apply(lambda x: x*np.random.random(1)[0])
+    df = df_full_trips[['Length', 'Width', 'ENDHUBPORT_PortID']]
+    df['Hub'] = df['ENDHUBPORT_PortID']
+    df['CO2 Efficiency'] = df_full_trips['Individual_TEU']
     df.head()
     return df
 
@@ -33,7 +34,7 @@ def get_co2_scatter(df_full_trips):
     fig = px.scatter_3d(_generate_scatter_df(df_full_trips), 
                         x='Length', 
                         y='Width', 
-                        z='CO2 Emitted',
-                        color='VesselType')
+                        z='CO2 Efficiency',
+                        color='Hub')
                         
     return fig
