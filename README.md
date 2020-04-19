@@ -1,5 +1,5 @@
 # Branch `FINAL` contains submission
-Switch branch to view final submission.
+Switch branch to `final` view submission. Master contains record-keeping only.
 
 ---
 
