@@ -58,6 +58,7 @@ def gen_map(df_full_trips, lines=True, zone_types='All'):
                 line=dict(width=0.3, color='gray'),
                 opacity=0.8,
                 showlegend=False,
+                name=row.Segment
             ))
             
             fig.add_trace(go.Scattergeo(
@@ -67,6 +68,7 @@ def gen_map(df_full_trips, lines=True, zone_types='All'):
                 line=dict(width=0.3, color='gray'),
                 opacity=0.8,
                 showlegend=False,
+                name=row.Segment
             ))
             
             fig.add_trace(go.Scattergeo(
@@ -76,18 +78,11 @@ def gen_map(df_full_trips, lines=True, zone_types='All'):
                 line=dict(width=0.3, color='gray'),
                 opacity=0.8,
                 showlegend=False,
+                name=row.Segment
             ))
-        
 
-
-    #lat_range, lon_range = get_lat_lon_range(gen_df_spoke_end(df_full_trips))
-    #scope = get_scope(lat_range, lon_range)
-    title = f'Hub and Spoke Network'
-
-    layout = dict(title=title,
-                  showlegend=True,
+    layout = dict(showlegend=True,
                   geo=dict(
-     #                 scope=scope,  # this is the only place we changed
                       projection = go.layout.geo.Projection(
                           type='azimuthal equal area'
                         ),

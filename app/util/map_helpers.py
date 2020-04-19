@@ -21,31 +21,28 @@ import math
 import plotly.graph_objects as go
 import plotly.express as px
 
-"""
-HELPERS
-"""
 
 """
 Generates the data needed to funnel trip data into a plotly geoscatter map
 """
 def gen_df_spokes_start(df_full_trips):
     df = df_full_trips[['MMSI',
-                                 'BaseDateTime_Start',
-                                 'LAT_SPOKEStartPort', 
-                                 'LON_SPOKEStartPort']].copy()
+                         'BaseDateTime_Start',
+                         'LAT_SPOKEStartPort', 
+                         'LON_SPOKEStartPort']].copy()
     df['color'] = 'green'
     df.columns = ['mmsi', 'time', 'lat', 'lon', 'color']
     df['size'] = 8
-    df['text'] = (df['mmsi'].apply(lambda x: "MMSI: %s" % x))
+    df['text'] = (df[['mmsi', 'time']].apply(lambda x: "MMSI: %s<br>Time: %s" % (x[0],x[1]), axis=1))
     df['name'] = 'Spoke Start'
     df.head()
     return df
 
 def gen_df_hub_start(df_full_trips):
     df = df_full_trips[['MMSI', 
-                            'StartHUBPORT_PortID', 
-                            'StartHUBPORT_LON',
-                             'StartHUBPORT_LAT']].copy()
+                        'StartHUBPORT_PortID', 
+                        'StartHUBPORT_LON',
+                        'StartHUBPORT_LAT']].copy()
 
     df['count'] = df['StartHUBPORT_PortID']
     df = df.groupby(['StartHUBPORT_PortID', 
@@ -57,14 +54,13 @@ def gen_df_hub_start(df_full_trips):
     df['text'] = df['port_id'].apply(lambda x: """Hub ID: %s""" % x)
     df['name'] = 'Hub Start'
     df['size'] = 8 + np.log(df['count'])
-    df.head()
     return df
 
 def gen_df_hub_end(df_full_trips):
     df = df_full_trips[['MMSI', 
-                                  'ENDHUBPORT_PortID', 
-                                  'ENDHUBPORT_LON',
-                                  'ENDHUBPORT_LAT']].copy()
+                         'ENDHUBPORT_PortID', 
+                         'ENDHUBPORT_LON',
+                         'ENDHUBPORT_LAT']].copy()
 
 
     df['count'] = df['ENDHUBPORT_PortID']
@@ -77,18 +73,16 @@ def gen_df_hub_end(df_full_trips):
     df['text'] = df['port_id'].apply(lambda x: """Hub ID: %s""" % x)
     df['name'] = 'Hub End'
     df['size'] = 8 + np.log(df['count'])
-    df.head()
     return df
 
 def gen_df_spoke_end(df_full_trips):
     df = df_full_trips[['MMSI', 
-                                  'LAT_SPOKEEndPort',
-                                  'LON_SPOKEEndPort',
-                                 'BaseDateTime_TripEnd']].copy()
+                         'LAT_SPOKEEndPort',
+                         'LON_SPOKEEndPort',
+                         'BaseDateTime_TripEnd']].copy()
     df.columns = ['mmsi', 'lat', 'lon', 'time']
     df['color'] = 'red'
     df['size'] = 8
-    df['text'] = (df['mmsi'].apply(lambda x: "MMSI: %s" % x))
+    df['text'] = (df[['mmsi', 'time']].apply(lambda x: "MMSI: %s<br>Time: %s" % (x[0],x[1]), axis=1))
     df['name'] = 'Spoke End'
-    df.head()
     return df

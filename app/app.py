@@ -13,6 +13,7 @@ import pandas as pd
 from dash.dependencies import Input, Output, State, ClientsideFunction
 import dash_core_components as dcc
 import dash_html_components as html
+import flask
 
 # Custom Team NYC imports
 from util import map_helpers
@@ -20,9 +21,11 @@ from views import filter, header, metrics, co2_scatter, orig_mapbox, static_co2
 from views import map as map_view
 from model.trips import Trips
 
+
 # get relative data folder
 PATH = pathlib.Path(__file__).parent
 DATA_PATH = PATH.joinpath("data").resolve()
+REPORT_PATH = PATH.joinpath("reports").resolve()
 
 app = dash.Dash(
     __name__, meta_tags=[{"name": "viewport", 
@@ -41,12 +44,11 @@ the views/ directory.
 """
 app.layout = html.Div(
     [
-        dcc.Store(id="aggregate_data"),
         # empty Div to trigger javascript file for graph resizing
         html.Div(id="output-clientside"),
         html.Div([metrics.get_metrics(),
                  filter.get_filter(trips)],
-            className="row flex-display",
+                 className="row flex-display",
         ),
         html.Div(
             [
@@ -148,7 +150,7 @@ def make_hub_and_spoke_figure(zone_types, vessel_types, cluster_slider, main_gra
         plot_bgcolor="#F9F9F9",
         paper_bgcolor="#F9F9F9",
         title=dict(
-            text="Hub and Spoke Freight Traffic Network",
+            text="Hub and Spoke Optimized Traffic Network",
             xanchor='center',
             x=0.5
         ),
@@ -212,13 +214,12 @@ def make_teu_figure(zone_types, vessel_types, main_graph_hover):
         hovermode="closest",
         plot_bgcolor="#F9F9F9",
         paper_bgcolor="#F9F9F9",
-        title="Hub and Spoke CO2 Map",
         legend_orientation='h',
         legend_y=-0.15
     )
 
     df = trips.get_trips(cluster_size=None,
-                        zone_types=zone_types,
+                        zone_types='All',
                         vessel_types=vessel_types)
 
     data = []
@@ -226,27 +227,18 @@ def make_teu_figure(zone_types, vessel_types, main_graph_hover):
         points_data = main_graph_hover['points'][0]
         if 'text' in points_data:
             text = points_data['text']
-            if 'MMSI' in text or 'Hub' in text:
-                text = text.split()[-1]
-                txt_orig = text.split()[0]
-                if 'MMSI' in txt_orig:
-                    df = df[df['MMSI'] == int(text)]
-                elif 'Hub' in txt_orig:
-                    df = df[df['StartHUBPORT_PortID'] == float(text)]
-                    df = df[df['ENDHUBPORT_PortID'] == float(text)]
-
+            if 'MMSI' in text:
+                text = text.split("<br>")
+                mmsi = text[0].split()[-1]
+                dt = text[1].split()[-1]
+                df = df[df['MMSI'] == int(mmsi)]
+                df = df[df['BaseDateTime_Start'] == dt]
                 df = df[(df['LON_SPOKEStartPort'] == points_data['lon']) |
-                        (df['StartHUBPORT_LON'] == points_data['lon']) |
-                        (df['LON_SPOKEEndPort'] == points_data['lon']) |
-                        (df['ENDHUBPORT_LON'] == points_data['lon'])]
-
+                        (df['LON_SPOKEEndPort'] == points_data['lon'])]
 
                 df = df[(df['LAT_SPOKEEndPort'] == points_data['lat']) |
-                        (df['ENDHUBPORT_LAT'] == points_data['lat']) |
-                        (df['LAT_SPOKEStartPort'] == points_data['lat']) |
-                        (df['StartHUBPORT_LAT'] == points_data['lat'])]
+                        (df['LAT_SPOKEStartPort'] == points_data['lat'])]
 
-                #df = df.drop_duplicates(subset=['cluster_size'])
                 df = df.sort_values(by=['cluster_size'], ascending=True)
                 data = [
                     dict(
@@ -267,17 +259,17 @@ def make_teu_figure(zone_types, vessel_types, main_graph_hover):
                     )
                 ]
                 
-        layout_individual["title"] = "Cluster Size vs CO2 Emissions"
-        layout_individual["xaxis_title"] = "Cluster Size (Epsilon)"
-        layout_individual["yaxis_title"] = "CO2 Efficiency (TEU)"
-        figure = dict(data=data, layout=layout_individual)
-    else:
-        df = trips.get_static_graph()
-        df = df.sort_values(by=['epsilons'], ascending=True)
-        figure = static_co2.get_figure(df)
-    
+                layout_individual["title"] = "Cluster Size vs CO2 Emissions (Spoke)"
+                layout_individual["xaxis_title"] = "Cluster Size (Epsilon)"
+                layout_individual["yaxis_title"] = "CO2 Efficiency (TEU)"
+                figure = dict(data=data, layout=layout_individual)
+                return figure
+            elif 'Hub' in text:
+                hub_id = text.split()[-1]
+    df = trips.get_static_graph()
+    df = df.sort_values(by=['epsilons'], ascending=True)
+    figure = static_co2.get_figure(df)
     return figure
-
 
 @app.callback(Output('static_graph', 'figure'),
               [Input("zone_types", "value")])
@@ -296,6 +288,11 @@ def make_static_graph(zone_types):
     df = df.sort_values(by=['epsilons'], ascending=True)
     figure = static_co2.get_figure(df)
     return figure
+
+
+@app.server.route("/data_notebook")
+def get_report():
+    return flask.send_from_directory(REPORT_PATH, "data_notebook.html")
 
 # Main
 if __name__ == "__main__":

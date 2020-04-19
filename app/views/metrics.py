@@ -22,7 +22,9 @@ def get_metrics():
                 html.H5(
                     "42. Team NYC", style={"margin-top": "0px"}
                     ),
-                html.P("This dashboard demonstrates how we can reduce CO2 emissions from maritime freight traffic by leveraging a hub-and-spoke model to aggregate vessel cargo. Toggle the controls on the right and interact with the charts to understand the various scenarios of optimizing freight traffic to reduce emissions.")
+                html.P("This dashboard demonstrates how we can reduce CO2 emissions from maritime freight traffic by leveraging a hub-and-spoke model to aggregate vessel cargo. Toggle the controls on the right and interact with the charts to understand the various scenarios of optimizing freight traffic to reduce emissions. Below link(s) provide more information about our analysis."),
+                html.A(html.Button("Data Notebook"), href="/data_notebook", target="_blank", style={"margin-right":"10px"}),
+                html.A(html.Button("DVA Requirements"), href="https://docs.google.com/document/d/e/2PACX-1vR5-8SC5dE30GdEohe69d-CA0QA45dPtBI43VYImQsqLKW7PjIVHPCGtA9fFlu98hAw6YWVF9Pyb-4n/pub", target="_blank")
                 ],
                 className="pretty_container"
                 ),
@@ -39,12 +41,12 @@ def get_metrics():
                     className="mini_container",
                     ),
                 html.Div(
-                    [html.H6(id="actual_text"), html.P("CO2 Original Efficiency")],
+                    [html.H6(id="actual_text"), html.P("CO2 Original Emissions")],
                     id="actual",
                     className="mini_container",
                     ),
                 html.Div(
-                    [html.H6(id="optimized_text"), html.P("CO2 Optimized Efficiency")],
+                    [html.H6(id="optimized_text"), html.P("CO2 Optimized Emissions")],
                     id="optimized",
                     className="mini_container",
                     ),
