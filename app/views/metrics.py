@@ -29,23 +29,23 @@ def get_metrics():
             html.Div(
                 [
                 html.Div(
-                    [html.H6(id="well_text"), html.P("Total Trips")],
-                    id="wells",
+                    [html.H6(id="num_trips_text"), html.P("Total Trips")],
+                    id="num_trips",
                     className="mini_container",
                     ),
                 html.Div(
-                    [html.H6(id="gasText"), html.P("Total Hubs")],
-                    id="gas",
+                    [html.H6(id="num_hubs_text"), html.P("Total Hubs")],
+                    id="num_hubs",
                     className="mini_container",
                     ),
                 html.Div(
-                    [html.H6(id="oilText"), html.P("CO2 Original Efficiency")],
-                    id="oil",
+                    [html.H6(id="actual_text"), html.P("CO2 Original Efficiency")],
+                    id="actual",
                     className="mini_container",
                     ),
                 html.Div(
-                    [html.H6(id="waterText"), html.P("CO2 Optimized Efficiency")],
-                    id="water",
+                    [html.H6(id="optimized_text"), html.P("CO2 Optimized Efficiency")],
+                    id="optimized",
                     className="mini_container",
                     ),
                 ],

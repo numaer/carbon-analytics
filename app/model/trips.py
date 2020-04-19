@@ -2,10 +2,6 @@
 trips.py
 
 Trips ORM model.
-
-TODO:
-    - Data should ideally be queried from Postgres here as needed. 
-    - For computationally expensive parameters, the results should be cached
 """
 
 # Import required libraries

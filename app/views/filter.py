@@ -33,10 +33,12 @@ def get_filter(trips):
 
     return html.Div(
         [
+        html.H4("Filters"),
         html.P(
             "Filter by cluster size (epsilon):",
             className="control_label",
             ),
+        html.Br(),
         dcc.Slider(
             id="cluster_slider",
             min=0,

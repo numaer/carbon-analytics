@@ -107,23 +107,19 @@ body {
   flex-direction: column;
 }
 
-#wells {
+#num_hubs {
   flex: 1;
 }
 
-#gas {
+#num_trips {
   flex: 1;
 }
 
-#aggregate_data {
-  align-items: center;
-}
-
-#oil {
+#optimized {
   flex: 1;
 }
 
-#water {
+#actual {
   flex: 1;
 }
 
@@ -135,9 +131,4 @@ body {
 #mainContainer {
   display: flex;
   flex-direction: column;
-}
-
-#pie_graph > div > div > svg:nth-child(3) > g.infolayer > g.legend {
-  pointer-events: all;
-  transform: translate(30px, 349px);
 }

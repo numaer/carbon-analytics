@@ -2,10 +2,6 @@
 co2_scatter.py
 
 Plotly figure for scatter plot for individual trip emissions
-
-TODO:
-- Get actual CO2 numbers
-
 """
 
 import pickle
@@ -23,22 +19,26 @@ import dash_html_components as html
 import plotly.express as px
 import plotly.graph_objects as go
 
+layout = dict(
+    margin=dict(l=30, r=30, b=20, t=40),
+    plot_bgcolor="#F9F9F9",
+    paper_bgcolor="#F9F9F9",
+    title="Vessel Dimensions vs CO2 Efficiency",
+)
+
 def _generate_scatter_df(df_full_trips):
     print(df_full_trips.columns)
     df = df_full_trips[['Length', 'Width', 'VesselType']]
     df['Vessel Type'] = df['VesselType']
     df['CO2 Efficiency'] = df_full_trips['Individual_TEU']
-    df.head()
     return df
 
-def get_co2_scatter(df_full_trips):
+def get_figure(df_full_trips):
     fig = px.scatter_3d(_generate_scatter_df(df_full_trips), 
-                        title=dict(
-                            text="Vessel Dimensions vs CO2 Efficiency",
-                        ),
                         x='Length', 
                         y='Width', 
                         z='CO2 Efficiency',
                         color='Vessel Type')
-                        
+    fig.update_layout(layout)
+    #figure = dict(data=fig, layout=layout)
     return fig
