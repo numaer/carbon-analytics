@@ -42,8 +42,6 @@ def gen_map(df_full_trips, lines=True, zone_types='All'):
                         color=df['color'],
                         line=dict(width=3, color='rgba(68, 68, 68, 0)')
                         )))
-        
-    #fig.show()
 
     """
     Add paths

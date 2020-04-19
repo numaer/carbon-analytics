@@ -45,3 +45,5 @@ geckodriver.log
 *.iml
 
 *.zip
+
+*.csv
