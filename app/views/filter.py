@@ -1,4 +1,3 @@
-# Import required libraries
 import pickle
 import copy
 import pathlib
@@ -46,7 +45,6 @@ def get_filter(trips):
             value=0.35,
             step=None,
             className="dcc_control",
-            #marks=CLUSTERS
             marks={k:"" for k in CLUSTERS},
             tooltip = { 'always_visible': True }
             ),

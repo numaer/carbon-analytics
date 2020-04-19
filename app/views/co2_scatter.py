@@ -20,10 +20,18 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 layout = dict(
-    margin=dict(l=30, r=30, b=20, t=40),
+    margin=dict(l=30, r=30, b=30, t=40),
     plot_bgcolor="#F9F9F9",
     paper_bgcolor="#F9F9F9",
-    title="Vessel Dimensions vs CO2 Efficiency",
+    title=dict(
+        text="Vessel Dimensions vs CO2 Efficiency",
+        xanchor='center',
+        x=0.5
+    ),
+    legend_orientation='h',
+    legend_y=-0.05,
+    legend_x=0.6,
+    legend_xanchor='center'
 )
 
 def _generate_scatter_df(df_full_trips):

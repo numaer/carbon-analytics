@@ -1,3 +1,9 @@
+"""
+app.py
+
+Application entry point for Team NYC's dashboard
+"""
+
 import copy
 import pathlib
 import dash
@@ -27,15 +33,6 @@ server = app.server
 # Load data
 trips = Trips(DATA_PATH) 
 
-layout = dict(
-    autosize=False,
-    automargin=False,
-    margin=dict(l=30, r=30, b=20, t=40),
-    hovermode="closest",
-    plot_bgcolor="#F9F9F9",
-    paper_bgcolor="#F9F9F9",
-    title="Hub and Spoke CO2 Map",
-)
 
 # Create app layout
 """
@@ -54,7 +51,7 @@ app.layout = html.Div(
         html.Div(
             [
                 html.Div(
-                    [dcc.Graph(id="main_graph")],
+                    [dcc.Graph(id="main_graph",config={'displayModeBar': False})],
                     className="pretty_container seven columns",
                 ),
                 html.Div(
@@ -135,7 +132,6 @@ def update_metrics(zone_types, vessel_types, cluster_slider):
     return metrics['number_of_trips'], metrics['number_of_hubs'], metrics['actual_co2_emission'], metrics['optimized_co2_emission']
 
 
-# Selectors -> main graph
 @app.callback(
     Output("main_graph", "figure"),
     [
@@ -145,14 +141,28 @@ def update_metrics(zone_types, vessel_types, cluster_slider):
     ],
     [State("main_graph", "relayoutData")],
 )
-def make_main_figure(
-    zone_types, vessel_types, cluster_slider, main_graph_layout
-):
+def make_hub_and_spoke_figure(zone_types, vessel_types, cluster_slider, main_graph_layout):
+    layout = dict(
+        margin=dict(l=0, r=0, b=10, t=35),
+        hovermode="closest",
+        plot_bgcolor="#F9F9F9",
+        paper_bgcolor="#F9F9F9",
+        title=dict(
+            text="Hub and Spoke Freight Traffic Network",
+            xanchor='center',
+            x=0.5
+        ),
+        legend_orientation='h',
+        legend_y=-0.05,
+        legend_x=0.3
+    )
+
     df_full_trips = trips.get_trips(cluster_size=cluster_slider,
                                     zone_types=zone_types,
                                     vessel_types=vessel_types)
     figure = map_view.gen_map(df_full_trips, 
                               zone_types=zone_types)
+    figure.update_layout(layout)
     return figure
 
 """
@@ -170,7 +180,7 @@ def make_main_figure(
 def make_mapbox_figure(
     zone_types, vessel_types, cluster_slider, main_graph_layout
 ):
-    df = trips.get_trips(cluster_size=0.001,
+    df = trips.get_trips(cluster_size=cluster_slider,
                          zone_types=zone_types,
                          vessel_types=vessel_types)                       
     figure = orig_mapbox.get_figure(df)
@@ -185,7 +195,6 @@ def make_mapbox_figure(
                 ]
              )
 def make_scatter_figure(zone_types, vessel_types, cluster_slider):
-    layout_individual = copy.deepcopy(layout)
     df_full_trips = trips.get_trips(cluster_size=cluster_slider,
                                     zone_types=zone_types,
                                     vessel_types=vessel_types)
@@ -198,7 +207,16 @@ def make_scatter_figure(zone_types, vessel_types, cluster_slider):
                 Input("vessel_types", "value"),
                 Input('main_graph', 'hoverData')])
 def make_teu_figure(zone_types, vessel_types, main_graph_hover):
-    layout_individual = copy.deepcopy(layout)
+    layout_individual = dict(
+        margin=dict(l=30, r=30, b=20, t=40),
+        hovermode="closest",
+        plot_bgcolor="#F9F9F9",
+        paper_bgcolor="#F9F9F9",
+        title="Hub and Spoke CO2 Map",
+        legend_orientation='h',
+        legend_y=-0.15
+    )
+
     df = trips.get_trips(cluster_size=None,
                         zone_types=zone_types,
                         vessel_types=vessel_types)
@@ -264,7 +282,16 @@ def make_teu_figure(zone_types, vessel_types, main_graph_hover):
 @app.callback(Output('static_graph', 'figure'),
               [Input("zone_types", "value")])
 def make_static_graph(zone_types):
-    layout_individual = copy.deepcopy(layout)
+    layout_individual = dict(
+        margin=dict(l=30, r=30, b=20, t=40),
+        hovermode="closest",
+        plot_bgcolor="#F9F9F9",
+        paper_bgcolor="#F9F9F9",
+        title="Hub and Spoke CO2 Map",
+        legend_orientation='h',
+        legend_y=-0.15,
+    )
+
     df = trips.get_static_graph()
     df = df.sort_values(by=['epsilons'], ascending=True)
     figure = static_co2.get_figure(df)

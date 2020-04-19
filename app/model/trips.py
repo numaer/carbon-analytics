@@ -30,6 +30,7 @@ class Trips():
             df['co2_total'] = df[['CO2_SpokeStart', 'CO2_SpokeEnd', 'CO2_Hub_Hub']].sum(axis=1)
             self.df_clusters.append(df)
         self.df_clusters = pd.concat(self.df_clusters)
+        print(len(self.df_clusters))
         self.static_emissions = pd.read_csv(self.data_path.joinpath(f"staticgraph.csv"), low_memory=False)
 
     def get_trips(self, cluster_size=1, zone_types="All", vessel_types=None):
