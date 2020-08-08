@@ -1,5 +1,7 @@
 # Reducing Global CO2 Emissions through Freight Traffic Analytics
 
+![Dashboard Preview](./app/assets/preview.PNG)
+
 ### Description
 
 CO2 emissions have been on the rise in the previous decades and pose a severe threat to the environment if no action is taken. One top source of CO2 emission is from maritime freight traffic which requires the delivery of cargo on many different kinds of ships. This package leverages available AIS ship movement data and analytics to demonstrate ways to reduce CO2 emission by aggregating ships at optimal ports. 
